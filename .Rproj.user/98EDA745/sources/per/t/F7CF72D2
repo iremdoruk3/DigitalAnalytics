@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1634069168741.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "582572271",
+    "id" : "F7CF72D2",
+    "lastKnownWriteTime" : 1634069382,
+    "last_content_update" : 1634069382177,
+    "path" : "C:/Users/Strahinja/Downloads/Only_Code.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "79,0",
+        "scrollLine" : "58"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

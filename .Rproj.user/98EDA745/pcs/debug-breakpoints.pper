@@ -1,0 +1,36 @@
+{
+    "debugBreakpointsState" : {
+        "breakpoints" : [
+            {
+                "editor_line_number" : 244,
+                "editor_state" : 1,
+                "function_name" : "toplevel",
+                "function_steps" : "",
+                "id" : 0,
+                "is_package_breakpoint" : false,
+                "is_pending_debug_completion" : false,
+                "line_number" : 244,
+                "needs_updated_steps" : false,
+                "package_name" : "",
+                "path" : "C:/Users/Strahinja/Desktop/books_Germany/R_Project/R_Project/Feature_Cleaning_Modeling.R",
+                "state" : 1,
+                "type" : 1
+            },
+            {
+                "editor_line_number" : 21,
+                "editor_state" : 1,
+                "function_name" : "toplevel",
+                "function_steps" : "",
+                "id" : 3,
+                "is_package_breakpoint" : false,
+                "is_pending_debug_completion" : false,
+                "line_number" : 21,
+                "needs_updated_steps" : false,
+                "package_name" : "",
+                "path" : "C:/Users/Strahinja/Downloads/Only_Code.R",
+                "state" : 1,
+                "type" : 1
+            }
+        ]
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1633770972462.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "470310822",
+    "id" : "3F708001",
+    "lastKnownWriteTime" : 1634069384,
+    "last_content_update" : 1634069384101,
+    "path" : "C:/Users/Strahinja/Desktop/books_Germany/R_Project/R_Project/Feature_Cleaning_Modeling.R",
+    "project_path" : "Feature_Cleaning_Modeling.R",
+    "properties" : {
+        "cursorPosition" : "37,0",
+        "disableDependencyDiscovery" : "1",
+        "docOutlineVisible" : "0",
+        "scrollLine" : "30",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
