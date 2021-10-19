@@ -1,7 +1,6 @@
 ####PACKAGE LIBRARY####
 #######################
 
-# In R-studios we install the package only once. Once we install it we load it with library
 # install.packages("broom", type="binary")
 # install.packages("ggplot2")
 # install.packages("Hmisc")
@@ -243,9 +242,14 @@ credit_data_cleaned_deskewed['MonthlyBalance'] = credit_data_cleaned_deskewed['M
 
 set.seed(101) # Set Seed so that same sample can be reproduced in future also
 # Now Selecting 75% of data as sample from total 'n' rows of the data  
-sample <- sample.int(n = nrow(credit_data_cleaned_deskewed), size = floor(.75*nrow(credit_data_cleaned_deskewed)), replace = F)
+sample <- sample.int(n = nrow(credit_data_cleaned_deskewed), size = ceiling(.80001*nrow(credit_data_cleaned_deskewed)), replace = F)
+
 train <- credit_data_cleaned_deskewed[sample, ]
 test  <- credit_data_cleaned_deskewed[-sample, ]
+
+sample2 <- sample.int(n = nrow(train), size = floor(.75*nrow(train)), replace = F)
+train_svm <- train[sample2, ]
+test_svm  <- test[-sample2, ]
 
 
 #Generalized Linear Model
@@ -257,6 +261,9 @@ model %>%
   blr_gains_table() %>%
   blr_roc_curve()
 
+cm = table(test[,1], predictions)
+cm
+
 # Using https://www.r-bloggers.com/2016/11/calculating-auc-the-area-under-a-roc-curve/
 # This ROC AUC can be used on any model that can make predictions
 # 1) Find the predicitons of the model on the test sample
@@ -266,6 +273,7 @@ predictions <- predict(model, test, type="response") # Use to predict on test
 roc_obj <- roc(test$SeriousDlqin2yrs, predictions)
 # 4) call the object to get the score
 auc(roc_obj)
+plot(roc_obj)
 # 5) you can plot the curve as well
 model %>%
   blr_gains_table() %>%
@@ -277,7 +285,15 @@ pred <- prediction(predictions, test$SeriousDlqin2yrs) # Creats this special pre
 RP.perf <- performance(pred, "prec", "rec") # function to calculate precission and recall
 plot(RP.perf) # Function to plot the precission recall curve
 perf <- performance(pred,"tpr","fpr") #Just another way to get ROC AUC using this library
-plot(perf) # Plot it (same as above
+plot(perf ,xlab = "Specificity",
+ylab = "Sensitivity") + lines(x = c(0,100), y = c(0,100))
+
+auc_ROCR <- performance(pred, measure = "auc")
+auc_ROCR <- auc_ROCR@y.values[[1]]
+
+
+library(ggplot2)
+# Plot it (same as above
 
 
 rf <- randomForest(
@@ -296,9 +312,9 @@ predrf <- prediction(as.numeric(pred)-1, as.numeric(test$SeriousDlqin2yrs)) # Cr
 RFpred <- performance(predrf, "tpr", "fpr") # function to calculate precission and recall
 plot(RFpred) 
 
-roc_obj <-roc(pred, as.numeric(test$SeriousDlqin2yrs))
-auc(roc_obj)
-plot(roc_obj)
+roc_obj2 <-roc(as.numeric(test$SeriousDlqin2yrs), as.numeric(pred),smoothed=TRUE)
+auc(roc_obj2)
+plot(roc_obj2)
 
 varImpPlot(rf,type=2)
 
@@ -314,3 +330,27 @@ library("party")
 ?cforest
 ct <- ctree(SeriousDlqin2yrs ~ ., data = train2)
 plot(ct,type="simple")
+
+
+##### SVM ##################
+library(e1071)
+svmfit = svm(SeriousDlqin2yrs ~ ., data = train_svm)
+print(svmfit)
+
+pred_svm = predict(svmfit, test_svm,type = "response")
+
+cm = table(test_svm[,1], pred_svm)
+cm
+## From CM you can get manually F1 , Prec, Recall , accuracy 
+library(pROC)
+roc_obj <-roc(pred_svm, as.numeric(test_svm$SeriousDlqin2yrs))
+auc(roc_obj)
+plot(roc_obj)
+
+
+memory.limit()
+#install.packages("kernlab")
+library(kernlab)
+letter_classifier <- ksvm(SeriousDlqin2yrs ~ ., data = train_svm,kernel = "vanilladot")
+letter_classifier
+
