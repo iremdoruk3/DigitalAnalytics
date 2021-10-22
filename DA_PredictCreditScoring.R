@@ -88,7 +88,7 @@ summary(credit_data_dropped_number$NumberOfTime60.89DaysPastDueNotWorse)
 a = data.frame(numofdayslate = "30-59", value = c(credit_data_dropped_number$NumberOfTime30.59DaysPastDueNotWorse))
 b = data.frame(numofdayslate = "60-89", value = c(credit_data_dropped_number$NumberOfTime60.89DaysPastDueNotWorse))
 c = data.frame(numofdayslate = "90", value = c(credit_data_dropped_number$NumberOfTimes90DaysLate))
-# this function will bind or join the rows. See data at bottom.
+# This function will bind or join the rows. See plot below
 plot.data = rbind(a,b,c) 
 
 ggplot(plot.data, aes(x=numofdayslate, y=value, fill=numofdayslate))+
@@ -108,8 +108,7 @@ credit_data_cleaned_days_past<-credit_data_dropped_number[!(credit_data_dropped_
 
 summary(credit_data_cleaned_days_past$SeriousDlqin2yrs)
 
-# The proportion is now 6.598% so we made the dataset 0,0086% more disbalanced but we dropped 269 rows
-# that made no sense. This is acceptable.
+# The proportion is now 6.598% so we made the dataset 0,0086% more disbalanced but we dropped 269 rows that made no sense.
 
 #2.3 RevolvingUtilizationOfUnsecuredLines
 
@@ -239,7 +238,7 @@ length(which(credit_data_cleaned_DebtRatio$NumberRealEstateLoansOrLines > 10 )) 
 length(which(credit_data_cleaned_DebtRatio$NumberRealEstateLoansOrLines > 10 &  credit_data_cleaned_DebtRatio$MonthlyIncome > 1)) # All have income
 length(which(credit_data_cleaned_DebtRatio$NumberRealEstateLoansOrLines > 10 &  credit_data_cleaned_DebtRatio$SeriousDlqin2yrs == 1)) # 20 !
 
-# Wow we see that there is a 25% default rate in people with income and high number of lines. These lines look great , no need to drop anything
+# We see that there is a 25% default rate in people with income and high number of lines. These lines look great , no need to drop anything
 
 # 2.7 Monthly Income and Number of Dependents
 # 2.7.1 Number of Dependents
@@ -289,7 +288,7 @@ ggplot(j, aes(x=group, y=value, fill=group)) +
         axis.line = element_line(colour = "black")) 
 
 # This all looks pretty much good at this point , all the features were cleaned. After the first models are fit,
-# We can do additional cleaning by revisiting any of these points. However probably no need
+# We can do additional cleaning by revisiting any of these points.
 
 #We save the variable to a new variable name to avoid errors.
 credit_data_cleaned <- credit_data_cleaned_DebtRatio
@@ -428,7 +427,6 @@ summary(test$SeriousDlqin2yrs)
 #**********************
 # 6.1 k-Nearest Neighbors
 #**********************
-#We check here whether knn is suitable.
 #After several trials, we found the optimal k that gives the best accuracy. (k=11)
 
 set.seed(1)
@@ -441,11 +439,10 @@ accuracy <- num.correct.labels / length(test$SeriousDlqin2yrs)
 accuracy 
 
 # best model is k=11
-knnmodel_tr <- knn(train=training[,-1], test=training[,-1], cl=training$SeriousDlqin2yrs, k=11)
+knnmodel_tr <- knn(train=training[,-1], test=training[,-1], cl=training$SeriousDlqin2yrs, k=11, prob = TRUE)
 knnmodel <- knn(train=training[,-1], test=test[,-1], cl=training$SeriousDlqin2yrs, k=11, prob=TRUE)
 
-#We use the train function from caret library to train the model. 
-#For the presentation, we unfortunately could not tune k=11; however, we will be working on that for our write-up.
+#We use the train function from caret library to fit and evaluate the model in order to apply the cross validation we set in partitioning part. 
 
 set.seed(1)
 knnmodel <- train(SeriousDlqin2yrs~., data=training, method="knn", trControl=TControl)
@@ -481,6 +478,50 @@ RP.perf <- performance(pred, "prec", "rec")
 # 3) Plot the precission recall curve
 plot(RP.perf) 
 
+
+#***********APPLYING kNN with scaling***************#
+# We are scaling the values only for the knn algorithm. 
+# We are also scaling the train and the test datasets separately so that there's no information leakage between the two datasets.
+
+# Creating separate data frames to avoid scaling the target variable
+serious_training<- as.data.frame(training[1])
+serious_test<- as.data.frame(test[1])
+
+# We are using the scale function to scale the values from training and test sets besides the target variable.
+preProcValues <- scale(training[c(2:14)])
+preProcValues_test <- scale(test[c(2:14)])
+
+# We are converting the scaled values to data frames from matrix.
+preProcValues <- data.frame(preProcValues)
+preProcValues_test <- data.frame(preProcValues_test)
+
+# We are combining the data frames again. 
+new_training<- cbind(serious_training, preProcValues)
+new_test<- cbind(serious_test, preProcValues_test)
+
+# We apply our model with the scaled values.
+set.seed(1)
+knnmodel <- train(SeriousDlqin2yrs~., data=new_training, method="knn", trControl=TControl)
+knnmodel 
+
+prediction.train <- predict(knnmodel, new_training[,-1],type="raw")
+acctr <- confusionMatrix(prediction.train, new_training[,1])
+acctr$table 
+acctr$overall['Accuracy'] 
+
+prediction.test <- predict(knnmodel, new_test[,-1],type="raw")
+accte <- confusionMatrix(prediction.test, new_test[,1]) 
+accte$table
+accte$overall['Accuracy']
+report <- rbind(report, data.frame(Model="k-NN", Acc.Train=acctr$overall['Accuracy'], Acc.Test=accte$overall['Accuracy']))
+
+precision <- posPredValue(prediction.test, new_test$SeriousDlqin2yrs, positive="1")
+recall <- sensitivity(prediction.test, new_test$SeriousDlqin2yrs, positive="1")
+F1 <- (2 * precision * recall) / (precision + recall) 
+
+roc_obj<- roc(prediction.test, as.numeric(new_test$SeriousDlqin2yrs))
+auc(roc_obj) 
+plot(roc_obj, smoothed = TRUE)
 
 #**********************
 # 6.2 Logistic Regression
@@ -525,15 +566,16 @@ plot(RP.perf)
 #**********************************
 # 6.3 Random Forest
 #**********************************
-#We used randomForest library to train the Random Forest model. After trying multiple hyperparameters (changed the depth, the number of trees etc.), we got the best accuracy from the default ntree=500 parameter. 
+#We used randomForest library to train the Random Forest model. 
+#After trying multiple hyperparameters (changed the number of trees, maxnodes etc.), we got the best accuracy from the default ntree=500 parameter. 
 
 set.seed(1)
-rformodel <- randomForest(SeriousDlqin2yrs ~., data=training, method="rf", trControl=TControl)
+rformodel <- randomForest(SeriousDlqin2yrs ~., data=training, method="rf", importance=TRUE)
 rformodel
 prediction.train <- predict(rformodel, training[,-1], type="response")
 prediction.test <- predict(rformodel, test[,-1], type="response")
 acctr <- confusionMatrix(prediction.train, training[,1])
-acctr$table
+acctr$table 
 acctr$overall['Accuracy']
 accte <- confusionMatrix(prediction.test, test[,1])
 accte$table
@@ -565,7 +607,8 @@ plot(RP.perf)
 #Visualizing the Feature Importance
 varImpPlot(rformodel, type=2)
 
-#Visuzaling the split of the trees
+#Used partykit library.
+#Visuzaling the split of the trees.	Type -> either 1 or 2, specifying the type of importance measure (1=mean decrease in accuracy, 2=mean decrease in node impurity).
 train2<- subset(training, select=c(RevolvingUtilizationOfUnsecuredLines, SeriousDlqin2yrs, DebtRatio))
 ct<- ctree(SeriousDlqin2yrs~., data=train2)
 plot(ct, type="simple")
